@@ -1,54 +1,81 @@
-# Generates a URL slug/permalink based on a field in a Mongoid model.
+# Generates a URL slug/permalink based on fields in a Mongoid model.
 module Mongoid::Slug
-  
-  def self.included(base)
-    class << base
-      attr_accessor :slugged_field
-      attr_accessor :slugged_source
-    end
-    base.extend ClassMethods
+  extend ActiveSupport::Concern
+
+  included do
+    cattr_accessor :slug_name, :slugged_fields, :slug_scoped
   end
 
   module ClassMethods #:nodoc:
-    
-    # Set a field as source of slug
-    def slug(field, options={})
-      self.slugged_field = options[:as] || :slug
-      self.slugged_source = field
-      field self.slugged_field, :type => String
-      before_save :slugify
-    end
+    # Set a field or a number of fields as source of slug
+    def slug(*args)
+      options = args.last.is_a?(Hash) ? args.pop : {}
+      self.slug_name = options[:as] || :slug
+      self.slug_scoped = options[:scoped] || false
+      self.slugged_fields = args
 
-    def find_by_slug(slug)
-      where(self.slugged_field => slug).first
+      field slug_name
+      if slug_scoped
+        index slug_name
+      else
+        index slug_name, :unique => true
+      end
+      before_save :generate_slug
     end
   end
 
   def to_param
-    read_attribute(slugged_field)
+    self.send slug_name
   end
 
   private
 
-  def slugify
-    self.send "#{slugged_field.to_s}=", find_unique_slug if new_record? || self.send((slugged_source.to_s + '_changed?').to_sym)
+  def find_(slug, stack=[])
+    if embedded?
+      if slug_scoped && stack.empty?
+        _parent.send(association_name).where( slug_name => slug ).to_a
+      else
+        stack << association_name
+        _parent.send :find_, slug, stack
+      end
+    else
+      stack.reverse!
+      path = (stack + [slug_name]).join(".")
+      found = collection.find(path => slug).to_a
+    
+      stack.each do |name|
+        if found.any?
+          found = found.first.send(name).to_a
+        end
+      end
+    
+      found
+    end
   end
 
   def find_unique_slug(suffix='')
-    slug = ("#{read_attribute(slugged_source)} #{suffix}").parameterize
-
-    if collection.find(slugged_source => slug).count == 0
+    slug = ("#{slug_base} #{suffix}").parameterize
+    if find_(slug).reject{ |doc| doc.id == self.id }.empty?
       slug
     else
-      new_suffix = suffix.blank? ? '1' : "#{suffix.to_i + 1}"
-      find_unique_slug(new_suffix)
+      suffix = suffix.blank? ? '1' : "#{suffix.to_i + 1}"
+      find_unique_slug(suffix)
     end
   end
-  
-  def slugged_field
-    self.class.slugged_field
+
+  def generate_slug
+    if new_record? || slugged_fields_changed?
+      self.send("#{slug_name}=", find_unique_slug)
+    end
   end
-  def slugged_source
-    self.class.slugged_source
+
+  def slug_base
+    self.class.slugged_fields.collect{ |field| self.send(field) }.join(" ")
+  end
+
+  def slugged_fields_changed?
+    self.class.slugged_fields.any? do |field|
+      self.send(field.to_s + '_changed?')
+    end
   end
 end

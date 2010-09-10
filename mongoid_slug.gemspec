@@ -5,20 +5,19 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mongoid_slug}
-  s.version = "0.1.0"
+  s.version = "0.4.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Hakan Ensari"]
-  s.date = %q{2010-06-22}
-  s.description = %q{Mongoid Slug generates a URL slug/permalink based on a field in a Mongoid model.}
+  s.authors = ["Hakan Ensari", "Gerhard Lazu"]
+  s.date = %q{2010-08-11}
+  s.description = %q{Mongoid Slug generates a URL slug/permalink based on fields in a Mongoid model.}
   s.email = %q{code@papercavalier.com}
   s.extra_rdoc_files = [
     "LICENSE",
-     "README.rdoc"
+     "README.md"
   ]
   s.files = [
     "LICENSE",
-     "README.rdoc",
      "lib/mongoid_slug.rb"
   ]
   s.homepage = %q{http://github.com/papercavalier/mongoid-slug}
@@ -27,9 +26,17 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Generates a URL slug in a Mongoid model}
   s.test_files = [
-    "spec/models/book.rb",
-     "spec/spec_helper.rb",
-     "spec/unit/mongoid_slug_spec.rb"
+    "spec/models/author.rb",
+     "spec/models/bar.rb",
+     "spec/models/baz.rb",
+     "spec/models/book.rb",
+     "spec/models/foo.rb",
+     "spec/models/person.rb",
+     "spec/models/publisher.rb",
+     "spec/models/sar.rb",
+     "spec/models/subject.rb",
+     "spec/mongoid_slug_spec.rb",
+     "spec/spec_helper.rb"
   ]
 
   if s.respond_to? :specification_version then
@@ -37,12 +44,12 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<mongoid>, ["~> 2.0.0.beta7"])
+      s.add_runtime_dependency(%q<mongoid>, ["~> 2.0.0.beta"])
     else
-      s.add_dependency(%q<mongoid>, ["~> 2.0.0.beta7"])
+      s.add_dependency(%q<mongoid>, ["~> 2.0.0.beta"])
     end
   else
-    s.add_dependency(%q<mongoid>, ["~> 2.0.0.beta7"])
+    s.add_dependency(%q<mongoid>, ["~> 2.0.0.beta"])
   end
 end
 
